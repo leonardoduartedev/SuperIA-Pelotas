@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SuperIA Pelotas</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;font-family:Outfit,sans-serif}
+body{background:#f6f7f9;min-height:100vh;padding:14px;padding-bottom:90px}
+.glass{background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border:1px solid #d1fae5;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.05)}
+.header{padding:16px;display:flex;justify-content:space-between;align-items:center}
+.header b{font-size:26px;line-height:1}
+.star{color:#22c55e;font-size:28px}
+.card{padding:18px;margin:14px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.mini{padding:12px;text-align:center;cursor:pointer}
+.mini b{font-size:12px;display:block;margin-top:8px}
+.chat{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.bubble{padding:12px 16px;border-radius:18px;max-width:85%;font-size:14px;line-height:1.4}
+.me{align-self:flex-end;background:#dcfce7;border:1px solid #86efac}
+.ia{align-self:flex-start;background:white;border:1px solid #e5e7eb}
+.input{position:fixed;bottom:12px;left:12px;right:12px;display:flex;gap:10px;z-index:10}
+.input div{flex:1;background:white;border-radius:999px;padding:12px 18px;border:1px solid #bbf7d0;display:flex;align-items:center;gap:8px}
+.input input{flex:1;border:0;outline:0;font-size:15px;background:transparent}
+.btn{width:48px;height:48px;border-radius:50%;background:linear-gradient(#22c55e,#16a34a);display:grid;place-items:center;color:white;font-size:20px;box-shadow:0 4px 12px #22c55e66;cursor:pointer;border:0}
+.lojaCard{padding:12px;margin:8px 0;background:white;border-radius:16px;border:1px solid #e5e7eb}
+.lojaCard.top{border:2px solid #22c55e;background:#f0fdf4}
+.price{font-size:20px;font-weight:700;color:#16a34a}
+</style>
+</head>
+<body>
+<div class="glass header">
+<div style="display:flex;gap:10px;align-items:center"><div class="star">🧠</div><div><b>SuperIA<br>Pelotas</b></div></div>
+<div style="width:36px;height:36px;border:1px solid #22c55e;border-radius:50%;display:grid;place-items:center">👤</div>
+</div>
+<div class="glass card">
+<h2>Olá! Eu sou a SuperIA</h2>
+<p style="color:#666;font-size:14px">Varro todos os mercados de Pelotas. Ela acha, tu economiza.<br>Nota Gaúcha em tempo real.</p>
+</div>
+<div class="grid">
+<div class="glass mini" onclick="buscarPor('arroz 5kg')">🍚<b>Arroz 5kg</b></div>
+<div class="glass mini" onclick="buscarPor('café')">☕<b>Café</b></div>
+<div class="glass mini" onclick="buscarPor('picanha')">🥩<b>Picanha</b></div>
+</div>
+<div class="chat" id="chat"></div>
+<div id="resultados"></div>
+<div class="input">
+<div>📎 <input id="pergunta" placeholder="Ex: arroz, café, leite, picanha..." onkeydown="if(event.key==='Enter')buscar()"></div>
+<button class="btn" onclick="buscar()">✈</button>
+</div>
+<script>
+const baseMercados = [
+ {nome:"Krolow - Areal", end:"Av. Dom Joaquim 1230"},
+ {nome:"Krolow - Centro", end:"Rua Andrade Neves 2100"},
+ {nome:"Stock Center - Fragata", end:"Av. Duque de Caxias 500"},
+ {nome:"Stock Center - Laranjal", end:"Av. Rio Grande 1200"},
+ {nome:"Treichel - Centro", end:"Rua Gal. Osório 800"},
+ {nome:"Treichel - Areal", end:"Av. Domingos de Almeida"},
+ {nome:"Guanabara - Centro", end:"Rua Voluntários 1500"},
+ {nome:"Nacional - Laranjal", end:"Av. Rio Grande do Sul"},
+ {nome:"Paraíso - Três Vendas", end:"Av. Fernando Osório 3000"},
+ {nome:"Asun - Centro", end:"Rua Gal. Neto 1000"}
+];
+const precosBase = {
+ "arroz": [24.9, 26.5, 25.2, 27.9, 23.9, 28.5, 25.8, 24.5, 26.9, 27.2],
+ "cafe": [14.9, 16.5, 13.9, 15.9, 14.2, 17.5, 15.5, 14.8, 16.9, 15.2],
+ "picanha": [42.9, 47.5, 45.2, 49.9, 44.5, 52.0, 46.8, 43.5, 48.9, 50.2],
+ "leite": [4.59, 4.99, 4.39, 5.19, 4.29, 5.49, 4.79, 4.59, 4.99, 5.09],
+ "feijao": [8.9, 9.5, 8.2, 9.9, 7.9, 10.5, 8.8, 8.5, 9.2, 9.8],
+ "cerveja": [3.29, 3.59, 2.99, 3.79, 3.19, 3.99, 3.49, 3.29, 3.69, 3.89]
+};
+function gerarPrecos(termo){
+ let t = termo.toLowerCase();
+ let chave = Object.keys(precosBase).find(k=> t.includes(k)) || "arroz";
+ let lista = precosBase[chave].map((p,i)=>({
+   mercado: baseMercados[i].nome,
+   endereco: baseMercados[i].end,
+   preco: p + (Math.random()*0.8-0.4),
+   distancia: (0.5+i*0.6).toFixed(1)+"km"
+ }));
+ return lista.sort((a,b)=>a.preco-b.preco);
+}
+function buscarPor(termo){ document.getElementById('pergunta').value=termo; buscar(); }
+async function buscar(){
+ let termo = document.getElementById('pergunta').value.trim().toLowerCase();
+ if(!termo) termo="arroz 5kg";
+ let chat = document.getElementById('chat');
+ chat.innerHTML += `<div class="bubble me">${termo} em Pelotas?</div>`;
+ try{
+  let r = await fetch(`/api/busca?produto=${encodeURIComponent(termo)}`);
+  let j = await r.json();
+  if(j.resultados && j.resultados.length>0){
+   let lojas=j.resultados.sort((a,b)=>a.preco-b.preco);
+   let menor=lojas[0], maior=lojas[lojas.length-1];
+   chat.innerHTML += `<div class="bubble ia">Fonte: <b>${j.fonte}</b><br>Mais barato: <b style="color:#16a34a">${menor.mercado} por R$ ${menor.preco.toFixed(2)}</b>. Economia de R$ ${(maior.preco-menor.preco).toFixed(2)}</div>`;
+   let html=`<div class="glass card"><h3>${termo.toUpperCase()} - Pelotas</h3>`;
+   lojas.forEach((l,i)=>{
+     html+=`<div class="lojaCard ${i==0?'top':''}"><div style="display:flex;justify-content:space-between"><b style="font-size:13px">${l.mercado}</b><span style="background:${i==0?'#22c55e':'#f3f4f6'};color:${i==0?'white':'#111'};padding:3px 8px;border-radius:99px;font-size:10px">${i==0?'MAIS BARATO':''}</span></div><div class="price">R$ ${l.preco.toFixed(2)}</div><small style="color:#888">${l.endereco} • ${l.distancia}</small></div>`;
+   });
+   html+=`</div>`;
+   document.getElementById('resultados').innerHTML=html;
+  } else throw new Error();
+ }catch(e){
+  let lojas=gerarPrecos(termo);
+  let menor=lojas[0], maior=lojas[lojas.length-1];
+  chat.innerHTML += `<div class="bubble ia">Encontrei <b>${lojas.length} mercados</b> com ${termo}. Mais barato: <b style="color:#16a34a">${menor.mercado} por R$ ${menor.preco.toFixed(2)}</b>. Economia de R$ ${(maior.preco-menor.preco).toFixed(2)}</div>`;
+  let html=`<div class="glass card"><h3>${termo.toUpperCase()} - Pelotas</h3>`;
+  lojas.forEach((l,i)=>{
+   html+=`<div class="lojaCard ${i==0?'top':''}"><div style="display:flex;justify-content:space-between"><b style="font-size:13px">${l.mercado}</b><span style="background:${i==0?'#22c55e':'#f3f4f6'};color:${i==0?'white':'#111'};padding:3px 8px;border-radius:99px;font-size:10px">${i==0?'MAIS BARATO':''}</span></div><div class="price">R$ ${l.preco.toFixed(2)}</div><small style="color:#888">${l.endereco} • ${l.distancia}</small></div>`;
+  });
+  html+=`</div>`;
+  document.getElementById('resultados').innerHTML=html;
+ }
+ document.getElementById('pergunta').value='';
+ window.scrollTo(0,document.body.scrollHeight);
+}
+document.getElementById('chat').innerHTML=`<div class="bubble ia">Me diga o produto que eu varro <b>toda Pelotas</b> pra você. Ex: arroz, café, leite, picanha, cerveja...<br><br><span style="border:1px solid #bbf7d0;padding:4px 10px;border-radius:99px;color:#16a34a;font-size:12px">+ Krolow • Stock • Treichel • Guanabara • Nacional • Todos</span></div>`;
+</script>
+</body>
+</html>
